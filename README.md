@@ -262,6 +262,15 @@ user.Validators = append(user.Validators, func(data map[string]any) error {
 })
 ```
 
+## Running Tests
+
+Run unit tests to ensure field and serializer validation works correctly:
+
+```
+cd serializers
+go test -v
+```
+
 ---
 
 ## 🏗 Roadmap
@@ -270,3 +279,17 @@ user.Validators = append(user.Validators, func(data map[string]any) error {
 * ListField support
 * Automatic JSON binding from HTTP requests
 * Extended DRF-like field options (MinLength, MaxValue, Regex)
+
+## License
+
+This project is licensed under the **MIT License**.
+See [LICENSE](LICENSE) file for details.
+
+---
+
+## Contact
+
+Email: [pckrishnadas88@gmail.com](mailto:pckrishnadas88@gmail.com)
+Twitter / X: [@pckrishnadas88](https://twitter.com/pckrishnadas88)
+
+---
