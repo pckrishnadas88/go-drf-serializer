@@ -1,13 +1,10 @@
-
----
-
 # go-drf-serializer
 
 **DRF-style serializers and validation for Go** — minimal, dependency-free, and Gin-friendly.
 
 This package provides:
 
-* Field-level validation (`CharField`, `IntegerField`, `EmailField`, `BooleanField`)
+* Field-level validation (`CharField`, `IntegerField`, `EmailField`, `BooleanField`, `ChoiceField`, `DateField`, `ListField`, `URLField`)
 * Custom validators
 * Serializer-level validation
 * Django REST Framework–style error output
@@ -76,23 +73,28 @@ func OnlyLetters(value any) error {
 }
 
 func main() {
-	// Field-level
 	name := serializers.CharFieldField(true, 20)
 	name.Validators = append(name.Validators, OnlyLetters)
 
 	age := serializers.IntegerFieldField(true)
 	email := serializers.EmailFieldField(true)
 	isActive := serializers.BooleanFieldField(false)
+	status := serializers.ChoiceFieldField(true, []any{"active", "inactive", "pending"})
+	birthdate := serializers.DateFieldField(true)
+	website := serializers.URLFieldField(true)
+	tags := serializers.ListFieldField(false, 1, 5)
 
-	// Serializer
 	user := serializers.New(map[string]serializers.Field{
-		"name":     name,
-		"age":      age,
-		"email":    email,
-		"isActive": isActive,
+		"name":      name,
+		"age":       age,
+		"email":     email,
+		"isActive":  isActive,
+		"status":    status,
+		"birthdate": birthdate,
+		"website":   website,
+		"tags":      tags,
 	})
 
-	// Serializer-level validator
 	user.Validators = append(user.Validators, func(data map[string]any) error {
 		age, ok := data["age"].(int)
 		if !ok {
@@ -104,12 +106,15 @@ func main() {
 		return nil
 	})
 
-	// Invalid data
 	data := map[string]any{
-		"name":     "Krishna123",
-		"age":      17,
-		"email":    "krish@example.com",
-		"isActive": true,
+		"name":      "Krishna123",
+		"age":       17,
+		"email":     "krish@example.com",
+		"isActive":  true,
+		"status":    "blocked",
+		"birthdate": "2025-11-29",
+		"website":   "https:://example.com",
+		"tags":      []string{"go", "api"},
 	}
 
 	if err := user.Validate(data); err != nil {
@@ -127,29 +132,16 @@ func main() {
 
 ---
 
-## ✅ Sample Output
-
-```json
-{
-  "name": [
-    "must contain letters only"
-  ],
-  "age": [
-    "age must be >= 18"
-  ]
-}
-```
-
 ## Gin Example
 
 ```go
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/pckrishnadas88/go-drf-serializer/serializers"
 	"unicode"
-	"fmt"
 )
 
 func OnlyLetters(value any) error {
@@ -177,7 +169,6 @@ func main() {
 		"age":  age,
 	})
 
-	// Only range check
 	userSerializer.Validators = append(userSerializer.Validators, func(data map[string]any) error {
 		if ageValue, ok := data["age"].(int); ok && ageValue < 18 {
 			return serializers.FieldError{Field: "age", Msg: "age must be >= 18"}
@@ -202,35 +193,6 @@ func main() {
 
 ---
 
-## Expected Validation Responses
-
-### Invalid data (plain Go or Gin):
-
-```json
-{
-  "name": ["must contain letters only"],
-  "age": ["age must be >= 18"]
-}
-```
-
-### Valid data:
-
-```json
-{
-  "message": "Validation passed!",
-  "data": {
-    "name": "Krishna",
-    "age": 25
-  }
-}
-```
-
----
-
-> **Note:** Gin integration is optional. Core serializers work in any Go project without adding Gin as a dependency.
-
----
-
 ## 🧱 Supported Fields
 
 | Field                        | Required   | Notes                                            |
@@ -239,14 +201,17 @@ func main() {
 | `IntegerFieldField()`        | true/false | Supports min/max validation via custom validator |
 | `EmailFieldField()`          | true/false | Validates email format                           |
 | `BooleanFieldField()`        | true/false | Simple boolean check                             |
+| `ChoiceFieldField(choices)`  | true/false | Only allows values in the provided slice         |
+| `DateFieldField()`           | true/false | Validates `YYYY-MM-DD` format                    |
+| `ListFieldField(min,max)`    | true/false | Validates slice/array length                     |
+| `URLFieldField()`            | true/false | Validates URL scheme and host                    |
 
 ---
 
-## 🔧 Adding Custom Validators
+## 🔧 Custom Validators
 
 ```go
 name.Validators = append(name.Validators, func(value any) error {
-    // custom logic
     return nil
 })
 ```
@@ -262,11 +227,13 @@ user.Validators = append(user.Validators, func(data map[string]any) error {
 })
 ```
 
+---
+
 ## Running Tests
 
 Run unit tests to ensure field and serializer validation works correctly:
 
-```
+```bash
 cd serializers
 go test -v
 ```
@@ -276,9 +243,11 @@ go test -v
 ## 🏗 Roadmap
 
 * Nested serializers
-* ListField support
-* Automatic JSON binding from HTTP requests
-* Extended DRF-like field options (MinLength, MaxValue, Regex)
+* Extended DRF-like options (MinLength, MaxValue, Regex)
+* Additional field types
+* More Gin helpers
+
+---
 
 ## License
 
@@ -291,5 +260,3 @@ See [LICENSE](LICENSE) file for details.
 
 Email: [pckrishnadas88@gmail.com](mailto:pckrishnadas88@gmail.com)
 Twitter / X: [@pckrishnadas88](https://twitter.com/pckrishnadas88)
-
----
