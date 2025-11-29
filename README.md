@@ -140,6 +140,95 @@ func main() {
 }
 ```
 
+## Gin Example
+
+```go
+package main
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/pckrishnadas88/go-drf-serializer/serializers"
+	"unicode"
+	"fmt"
+)
+
+func OnlyLetters(value any) error {
+	str, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("not a string")
+	}
+	for _, r := range str {
+		if !unicode.IsLetter(r) {
+			return fmt.Errorf("must contain letters only")
+		}
+	}
+	return nil
+}
+
+func main() {
+	r := gin.Default()
+
+	name := serializers.CharFieldField(true, 20)
+	name.Validators = append(name.Validators, OnlyLetters)
+	age := serializers.IntegerFieldField(true)
+
+	userSerializer := serializers.New(map[string]serializers.Field{
+		"name": name,
+		"age":  age,
+	})
+
+	// Only range check
+	userSerializer.Validators = append(userSerializer.Validators, func(data map[string]any) error {
+		if ageValue, ok := data["age"].(int); ok && ageValue < 18 {
+			return serializers.FieldError{Field: "age", Msg: "age must be >= 18"}
+		}
+		return nil
+	})
+
+	r.POST("/users", func(c *gin.Context) {
+		data, ok := serializers.GinBindAndValidate(c, userSerializer)
+		if !ok {
+			return
+		}
+		c.JSON(200, gin.H{
+			"message": "Validation passed!",
+			"data":    data,
+		})
+	})
+
+	r.Run(":8080")
+}
+```
+
+---
+
+## Expected Validation Responses
+
+### Invalid data (plain Go or Gin):
+
+```json
+{
+  "name": ["must contain letters only"],
+  "age": ["age must be >= 18"]
+}
+```
+
+### Valid data:
+
+```json
+{
+  "message": "Validation passed!",
+  "data": {
+    "name": "Krishna",
+    "age": 25
+  }
+}
+```
+
+---
+
+> **Note:** Gin integration is optional. Core serializers work in any Go project without adding Gin as a dependency.
+
 ---
 
 ## 🧱 Supported Fields
