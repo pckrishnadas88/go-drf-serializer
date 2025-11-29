@@ -1,4 +1,3 @@
-Here’s a **ready-to-use README.md** based on your full example code, including installation, features, and usage examples:
 
 ---
 
@@ -131,7 +130,6 @@ func main() {
 ## ✅ Sample Output
 
 ```json
-Validation error:
 {
   "name": [
     "must contain letters only"
